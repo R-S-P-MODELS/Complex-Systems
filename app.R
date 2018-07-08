@@ -49,6 +49,69 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
   }
 }
 
+ajuste<-function(a,w){ 
+  #print(a)
+  #a sera o data.frame do arquivo x por y
+  x=length(a[,1])
+  #print(x)
+  print(w)
+  erro=0
+  erro[2]=0
+  B=a[,2]
+  for(j in 1:w){
+    A=matrix(0,x,j)
+    for(i in 1:j)
+      A[,i]=a[,1]^(i-1) # inicializacao da matriz
+    print(j)
+    X=solve(t(A)%*%A,t(A)%*%B)
+    erro[j-1]=sum(abs(A%*%X -B))
+  }
+  #print(erro)
+  d=which(min(erro)==erro)
+  d=d+1
+  A=matrix(0,x,d)
+  for(i in 1:d)
+    A[,i]=a[,1]^(i-1)
+  X=solve(t(A)%*%A,t(A)%*%B) ## constantes x
+  print(X)
+  final=data.frame(a,A%*%X)
+  plot(final[,1],final[,2],xlab="x",ylab = "y",main="F(x)")
+  lines(final[,1],final[,3])
+  write.table(file="dataset.dat",final)
+}
+
+ajusteunico<-function(a,w){ 
+  #print(a)
+  #a sera o data.frame do arquivo x por y
+  x=length(a[,1])
+  #print(x)
+  print(w)
+  erro=0
+  erro[2]=0
+  B=a[,2]
+  fit2 <- lm(a[,2]~poly(a[,1],w,raw=TRUE))
+  plot(a[,1],a[,2],xlab="x",ylab = "y",main="F(x)")
+  lines(a[,1], predict(fit2, data.frame(x=a[,1])), col="red")
+  print(summary(fit2))
+  #write.table(file="dataset.dat",final)
+}
+
+
+drunk <- function(p,passos,pessoas,largura){
+  assemble=0
+  assemble[2]=0
+  for(i in 1:pessoas)
+  {
+    b=runif(passos,min = 0,max=100)
+    c=as.numeric(b<=(p*100) )
+    d=length(b)-sum(c)
+    #c=c-as.numeric(b<(p*100) )
+    assemble[i]=largura*(sum(c) -d )
+  }  
+  
+  write.table(file="dataset.dat",assemble)
+  
+}
 
 lorentz <- function(alfa,beta,rho,passos) {
   dt=0.01
@@ -182,7 +245,7 @@ SEIR <- function(N,beta,gamma,passos,infeccaoinicial,mu) {
 ui <- fluidPage(
    
    # Application title
-  div(style="display:inline-block",selectInput(inputId = "hue",label="opcao",choices = c("SIS","SIR","SEIR","Atrator de Lorentz") ) ),      
+  div(style="display:inline-block",selectInput(inputId = "hue",label="opcao",choices = c("SIS","SIR","SEIR","Atrator de Lorentz","Andar do Bebado","Ajuste de curva") ) ),      
   conditionalPanel( condition = "input.hue=='SIS'",
                     source("UI_SIS.R", local = TRUE)$value
                     
@@ -203,6 +266,16 @@ ui <- fluidPage(
                     source("UI_LORENTZ.R",local=TRUE)$value
                     
   ),
+  
+  conditionalPanel( condition = "input.hue=='Andar do Bebado'",
+                    source("UI_DRUNK.R",local=TRUE)$value
+                    
+  ),
+  conditionalPanel( condition = "input.hue=='Ajuste de curva'",
+                    source("UI_AJUSTE.R",local=TRUE)$value
+                    
+  ),
+  
 
   # titlePanel("Old Faithful Geyser Data"),
    
@@ -215,7 +288,21 @@ ui <- fluidPage(
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
-   
+  fitando= eventReactive(input$calculando, 
+                                  {
+                                    inFile <- input$arqui
+                                    
+                                    if (is.null(inFile))
+                                      return(NULL)
+                                    print("pre")
+                                    print(inFile$datapath)
+                                    w=read.table(inFile$datapath)
+                                    print("pos")
+                                    #ajuste(w,input$termosmaximos)
+                                    ajusteunico(w,input$termosmaximos)
+                                  }) 
+  
+  
   getData <- reactive({
     tempo=input$Passos
     funParameter <- input$rho
@@ -231,7 +318,10 @@ server <- function(input, output) {
       return(SEIR(input$alfa2, input$beta2, input$rho2,input$Passos2,input$infeccao2,algo ) )
     else if(input$hue=="Atrator de Lorentz")
       return(lorentz(input$alfa3,input$beta3,input$rho3,input$Passos3))
-    
+    else if(input$hue=="Andar do Bebado")
+      return (drunk(input$Probabilidade,input$Passosx,input$bebados,input$Largura) )
+    else if(input$hue=="Ajuste de curva")
+        return(fitando())
   })
 #   output$distPlot <- renderPlot({
       # generate bins based on input$bins from ui.R
@@ -283,6 +373,11 @@ server <- function(input, output) {
       
     }
     
+    if(input$hue=="Andar do Bebado"){
+      
+      hist(aux[,1],xlab = "distancia andada",ylab = "numero de bebados",main = "Distribuicao dos Bebados")
+      
+    }
     
   })
   

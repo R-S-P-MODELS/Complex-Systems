@@ -6,13 +6,14 @@
 #
 #    http://shiny.rstudio.com/
 #
-packages <- c("ggplot2","shiny")
+packages <- c("ggplot2","shiny","pracma")
 if (length(setdiff(packages, rownames(installed.packages()))) > 0) {
   install.packages(setdiff(packages, rownames(installed.packages())))  
 }
 
 require(shiny)
 require(ggplot2)
+require(pracma)
 multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
   library(grid)
   
@@ -47,6 +48,41 @@ multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
                                       layout.pos.col = matchidx$col))
     }
   }
+}
+
+sinal<-function(m,a){
+  #a=read.table("input.dat")
+  #a[2]=2
+  #a[3:100]=3:100
+  #print(a)
+  b=fft(a[,2])
+  n=as.integer(m/2)
+  #print(length(b))
+  #m=45
+  if(m<length(b)*0.5)
+    b[(n+1):(length(b)-n)]=0
+  #print(b)
+  c=ifft(b)
+  u=data.frame(a[,1],Re(c),Re(b)  )
+  
+  #u=data.frame(a[,1],Re(c))
+  p1=qplot(u[,1],u[,2],geom="line",xlab="x",ylab="y")
+  #p2=qplot(u[,1],u[,3],geom="line",xlab="x",ylab="y")
+  p2=qplot(u[,1],Mod(b),geom="line",xlab="x",ylab="y")
+  multiplot(p1, p2,cols=2)
+  write.table(file="saida.dat",u)
+}
+
+convolucao<-function(b){
+  a=read.table("saida.dat")
+  x=convolve(a[,2],b[,2],type="open")
+  w=1:length(x)
+  #hu=1:length(b)
+  p1=qplot(w,x,geom="line",xlab="x",ylab="y")
+  p2=qplot(a[,1],a[,2],geom="line",xlab="x",ylab="y")
+  p3=qplot(b[,1],b[,2],geom="line",xlab="x",ylab="y")
+  multiplot(p1, p2,p3,cols=2)
+  
 }
 
 ajuste<-function(a,w){ 
@@ -92,7 +128,7 @@ ajusteunico<-function(a,w){
   fit2 <- lm(a[,2]~poly(a[,1],w,raw=TRUE))
   plot(a[,1],a[,2],xlab="x",ylab = "y",main="F(x)")
   lines(a[,1], predict(fit2, data.frame(x=a[,1])), col="red")
-  print(summary(fit2))
+  renderPrint(coefficients(fit2))
   #write.table(file="dataset.dat",final)
 }
 
@@ -245,7 +281,7 @@ SEIR <- function(N,beta,gamma,passos,infeccaoinicial,mu) {
 ui <- fluidPage(
    
    # Application title
-  div(style="display:inline-block",selectInput(inputId = "hue",label="opcao",choices = c("SIS","SIR","SEIR","Atrator de Lorentz","Andar do Bebado","Ajuste de curva") ) ),      
+  div(style="display:inline-block",selectInput(inputId = "hue",label="opcao",choices = c("SIS","SIR","SEIR","Atrator de Lorentz","Andar do Bebado","Ajuste de curva","Filtro Personalizado") ) ),      
   conditionalPanel( condition = "input.hue=='SIS'",
                     source("UI_SIS.R", local = TRUE)$value
                     
@@ -276,6 +312,11 @@ ui <- fluidPage(
                     
   ),
   
+  conditionalPanel( condition = "input.hue=='Filtro Personalizado'",
+                    source("UI_Filtro.R",local=TRUE)$value
+                    
+  ),
+  
 
   # titlePanel("Old Faithful Geyser Data"),
    
@@ -290,6 +331,8 @@ ui <- fluidPage(
 server <- function(input, output) {
   fitando= eventReactive(input$calculando, 
                                   {
+                                    print("pre")
+                                    
                                     inFile <- input$arqui
                                     
                                     if (is.null(inFile))
@@ -300,7 +343,36 @@ server <- function(input, output) {
                                     print("pos")
                                     #ajuste(w,input$termosmaximos)
                                     ajusteunico(w,input$termosmaximos)
-                                  }) 
+                                  })
+  
+  
+  filtrar= eventReactive(input$botaofiltrado, 
+                                  {
+                                    inFile <- input$file1
+                                    
+                                    if (is.null(inFile))
+                                      return(NULL)
+                                    print("pre")
+                                    print(inFile$datapath)
+                                    w=read.table(inFile$datapath)
+                                    print("pos")
+                                    sinal(input$Passoskernel,w)
+                                  })
+  
+  convoluir= eventReactive(input$conv, 
+                          {
+                            inFile <- input$file2
+                            inf<-input$file1
+                            if (is.null(inFile))
+                              return(NULL)
+                            if (is.null(inf))
+                              return(NULL)
+                            print("pre")
+                            print(inFile$datapath)
+                            w=read.table(inFile$datapath)
+                            print("pos")
+                            convolucao(w)
+                          })
   
   
   getData <- reactive({
@@ -322,6 +394,11 @@ server <- function(input, output) {
       return (drunk(input$Probabilidade,input$Passosx,input$bebados,input$Largura) )
     else if(input$hue=="Ajuste de curva")
         return(fitando())
+    else if(input$hue=="Filtro Personalizado")
+    {
+      filtrar()
+      convoluir()
+    }
   })
 #   output$distPlot <- renderPlot({
       # generate bins based on input$bins from ui.R

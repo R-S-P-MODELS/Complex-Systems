@@ -1,6 +1,6 @@
 myUI <- shinyUI({
 ui <- fluidPage(
-  
+
   fileInput("arqui", "Insira seu arquivo de dados como arquivo .dat",
             accept = c(
               "text/dat",".dat")

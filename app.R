@@ -281,7 +281,7 @@ SEIR <- function(N,beta,gamma,passos,infeccaoinicial,mu) {
 ui <- fluidPage(
    
    # Application title
-  div(style="display:inline-block",selectInput(inputId = "hue",label="opcao",choices = c("SIS","SIR","SEIR","Atrator de Lorentz","Andar do Bebado","Ajuste de curva","Filtro Personalizado") ) ),      
+  div(style="display:inline-block",selectInput(inputId = "hue",label="opcao",choices = c("SIS","SIR","SEIR","Atrator de Lorentz","Andar do Bebado","Ajuste de curva","Filtro Personalizado","Oscilador Quantico","Intra Hospedeiro") ) ),      
   conditionalPanel( condition = "input.hue=='SIS'",
                     source("UI_SIS.R", local = TRUE)$value
                     
@@ -317,6 +317,15 @@ ui <- fluidPage(
                     
   ),
   
+ conditionalPanel( condition = "input.hue=='Oscilador Quantico'",
+                    source("UI_OSCILADOR.R",local=TRUE)$value
+                    
+  ),
+ 
+ conditionalPanel( condition = "input.hue=='Intra Hospedeiro'",
+                   source("UI_Intra.R",local=TRUE)$value
+                   
+ ),
 
   # titlePanel("Old Faithful Geyser Data"),
    
@@ -329,6 +338,38 @@ ui <- fluidPage(
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
+  
+  withinhost<-eventReactive(input$ativacao,{
+    a=input$a1
+    b=input$remedio
+    c=input$fwith
+    str="./a.out"
+    str=paste(str,c)
+    
+    str=paste(str,a)
+    str=paste(str,b)
+    str=paste(str,"> saida.dat")
+    
+    #system("gcc harmonico")
+    print(str)
+    system("gcc artigochromer.c -lm",intern=TRUE)
+    system(str,intern=TRUE)
+    hu=read.table("saida.dat")
+    print(hu)
+    # if(input$onda=="psi")
+    helpText("Azul S vermelho R verde I")
+    matplot(hu[,1]/365.0,hu[,2],type="l",xlab="x",ylab="y",col="blue")
+    matplot(hu[,1]/365.0,hu[,4],type="l",xlab="x",ylab="y",col = "red",add = TRUE)
+    matplot(hu[,1]/365.0,hu[,6],type="l",xlab="x",ylab="y",col="green",add = TRUE)
+    #p1=qplot(hu[,1],hu[,3]/hu[,2],xlab="x",ylab = "psi",geom="line")
+    #else if(input$onda=="probabilidade")
+    # qplot(hu[,1],hu[,4]/hu[,2],xlab="x",ylab = "psi",geom="line")
+    #  qplot(hu[,1],hu[,4]/hu[,2],xlab="x",ylab = "psi",geom="line")
+    
+  })
+  
+  
+  
   fitando= eventReactive(input$calculando, 
                                   {
                                     print("pre")
@@ -374,6 +415,28 @@ server <- function(input, output) {
                             convolucao(w)
                           })
   
+  oscilador<-reactive({
+    a=input$caixa
+    b=input$dxcaixa
+    c=input$termos
+    str="./a.out"
+    str=paste(str,a)
+    str=paste(str,b)
+    str=paste(str,c)
+    
+    #system("gcc harmonico")
+    print(str)
+    system("gcc harmonicov1.c -lm",intern=TRUE)
+    system(str,intern=TRUE)
+    hu=read.table("saida.dat")
+    #print(hu)
+    #if(input$onda=="psi")
+     p1= qplot(hu[,1],hu[,2],xlab="x",ylab = "psi",geom="line")
+    #else if(input$onda=="probabilidade")
+     p2= qplot(hu[,1],hu[,3],xlab="x",ylab = "psi*psi",geom="line")
+    multiplot(p1,p2,cols=2)
+  })
+  
   
   getData <- reactive({
     tempo=input$Passos
@@ -399,7 +462,12 @@ server <- function(input, output) {
       filtrar()
       convoluir()
     }
+    else if(input$hue=="Oscilador Quantico")
+      oscilador()
+    else if(input$hue=="Intra Hospedeiro")
+      withinhost()
   })
+    
 #   output$distPlot <- renderPlot({
       # generate bins based on input$bins from ui.R
  #     x    <- faithful[, 2] 

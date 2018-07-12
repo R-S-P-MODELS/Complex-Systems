@@ -7,10 +7,12 @@ ui <- fluidPage(
   ),
    
   div(style="display:inline-block",sliderInput(inputId = "termosmaximos",
-                  label = "Numero de termos maximos da expansão a se buscar (1 é funcao constante 2 linear)",
+                  label = "Numero de termos maximos da expansao a se buscar",
                   min = 1,
                   max = 100,
                   value = 2)),
+
+# div(style="display:inline-block",textInput("text", label = h3("Digite a equacao a ser fitada"), value = "x^2+x") ),
 #  div(style="display:inline-block",selectInput(inputId = "Opcao_integ",label="tipo de integracao",choices = c("verlet","velocity verlet","Leap Frog") ) ),
 
 #div(style="display:inline-block",selectInput(inputId = "Opcao_ini",label="tipo de inicializacao",choices = c("nula","Equiparticao","Boltzman") ) ),

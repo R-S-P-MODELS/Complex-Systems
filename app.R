@@ -336,7 +336,9 @@ ui <- fluidPage(
       # Show a plot of the generated distribution
       mainPanel(
          plotOutput("distPlot")
-      )
+      ),
+ hr(),
+ print("Modelo programado por Rafael Silva Pereira, contato: r.s.p.models@gmail.com")
    )
 
 

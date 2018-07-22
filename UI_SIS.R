@@ -36,5 +36,7 @@ title = 'Modelo Epidemiologico SIS',
                                 min = 0,
                                 max = 1,
                                 value = 0.1)
+
+
 )
 })

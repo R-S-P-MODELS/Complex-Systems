@@ -281,7 +281,7 @@ SEIR <- function(N,beta,gamma,passos,infeccaoinicial,mu) {
 ui <- fluidPage(
    
    # Application title
-  div(style="display:inline-block",selectInput(inputId = "hue",label="opcao",choices = c("SIS","SIR","SEIR","Atrator de Lorentz","Andar do Bebado","Ajuste de curva","Filtro Personalizado","Oscilador Quantico","Intra Hospedeiro") ) ),      
+  div(style="display:inline-block",selectInput(inputId = "hue",label="opcao",choices = c("SIS","SIR","SEIR","Atrator de Lorentz","Andar do Bebado","Ajuste de curva","Filtro Personalizado","Oscilador Quantico","Intra Hospedeiro","Informacao Neuronios") ) ),      
   conditionalPanel( condition = "input.hue=='SIS'",
                     source("UI_SIS.R", local = TRUE)$value
                     
@@ -327,6 +327,10 @@ ui <- fluidPage(
                    
  ),
 
+ conditionalPanel( condition = "input.hue=='Informacao Neuronios'",
+                   source("UI_Neuron.R",local=TRUE)$value
+                   
+ ),
   # titlePanel("Old Faithful Geyser Data"),
    
       # Show a plot of the generated distribution
@@ -368,6 +372,40 @@ server <- function(input, output) {
     
   })
   
+  
+  
+  Neurons<-eventReactive(input$ativacaoneuron,{
+    a=input$mediagauss
+    b=input$vargauss
+    c=input$conectividade
+    str="./a.out"
+    str=paste(str,c)
+    
+    str=paste(str,a)
+    str=paste(str,b)
+    str=paste(str,"> saida.dat")
+    
+    #system("gcc harmonico")
+    print(str)
+    system("gcc main_neuron.c -lm",intern=TRUE)
+    system(str,intern=TRUE)
+    hu=read.table("disparos.dat")
+    hua=read.table("tensao.dat")
+    print(hu)
+    # if(input$onda=="psi")
+    p1=qplot(hu[,1],hu[,2]/200.0,xlab = "passo",ylab = "percentual de neuronios disparados")
+    p2=qplot(hua[,1],hua[,2]/50.0,xlab = "passo",ylab = "tensao media em relacao ao treshhold")
+    multiplot(p1,p2,cols=2)
+    #helpText("Azul S vermelho R verde I")
+    #matplot(hu[,1]/365.0,hu[,2],type="l",xlab="x",ylab="y",col="blue")
+    #matplot(hu[,1]/365.0,hu[,4],type="l",xlab="x",ylab="y",col = "red",add = TRUE)
+    #matplot(hu[,1]/365.0,hu[,6],type="l",xlab="x",ylab="y",col="green",add = TRUE)
+    #p1=qplot(hu[,1],hu[,3]/hu[,2],xlab="x",ylab = "psi",geom="line")
+    #else if(input$onda=="probabilidade")
+    # qplot(hu[,1],hu[,4]/hu[,2],xlab="x",ylab = "psi",geom="line")
+    #  qplot(hu[,1],hu[,4]/hu[,2],xlab="x",ylab = "psi",geom="line")
+    
+  })
   
   
   fitando= eventReactive(input$calculando, 
@@ -466,6 +504,8 @@ server <- function(input, output) {
       oscilador()
     else if(input$hue=="Intra Hospedeiro")
       withinhost()
+    else if(input$hue=="Informacao Neuronios")
+      Neurons()
   })
     
 #   output$distPlot <- renderPlot({

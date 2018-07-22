@@ -1,6 +1,8 @@
 myUI <- shinyUI({
 ui <- fluidPage(
-
+withMathJax(),
+                    helpText('Este modulo expande um conjunto de dados em uma serie polinomial,selecione o numero de termos no slider e inclua um arquivo de duas colunas, a primeira com eixo x e a segunda y '),
+                    
   fileInput("arqui", "Insira seu arquivo de dados como arquivo .dat",
             accept = c(
               "text/dat",".dat")

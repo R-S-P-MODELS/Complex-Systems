@@ -343,6 +343,10 @@ ui <- fluidPage(
                    source("UI_Musicas.R",local=TRUE)$value
                    
  ),
+ conditionalPanel( condition = "input.hue=='Potencial de Laplace'",
+                   source("UI_Laplace.R",local=TRUE)$value
+                   
+ ),
   # titlePanel("Old Faithful Geyser Data"),
    
       # Show a plot of the generated distribution
@@ -362,7 +366,7 @@ server <- function(input, output) {
   
   output$Drop1 = renderUI({ 
     if(input$materias=="Fisica Teorica")
-      palavragrande=c("Atrator de Lorentz","Andar do Bebado","Oscilador Quantico")
+      palavragrande=c("Atrator de Lorentz","Andar do Bebado","Oscilador Quantico","Potencial de Laplace")
     else if(input$materias=="Fisica Experimental")
       palavragrande=c("Ajuste de curva","Filtro Personalizado","Propagar Erro")
     else if(input$materias=="Sistemas Complexos")
@@ -579,6 +583,41 @@ server <- function(input, output) {
     multiplot(p1,p2,cols=2)
   })
   
+  laplaceheat<-eventReactive(input$botaolaplace,{
+    a=input$opcaocontorno
+    b=input$tensaolaplace
+    c=input$aterramento
+    if(a=="Capacitor")
+      a=1
+    else if(a=="Casca circular")
+      a=2
+    else if(a=="Retangulo")
+      a=3
+    if(c=="Sim")
+      c=1
+    else if(c=="Nao")
+      c=0
+    str="./a.out"
+    str=paste(str,a)
+    str=paste(str,b)
+    str=paste(str,c)
+    
+    #system("gcc harmonico")
+    print(str)
+  system("gcc laplacegeral.c -lm",intern=TRUE)
+    system(str,intern=TRUE)
+    a=read.table("saida.dat")
+    #a=read.table("heatmap.dat")
+    #print(hu)
+    #if(input$onda=="psi")
+    #p1= qplot(hu[,1],hu[,2],xlab="x",ylab = "psi",geom="line")
+    #else if(input$onda=="probabilidade")
+   # p2= qplot(hu[,1],hu[,3],xlab="x",ylab = "psi*psi",geom="line")
+    #multiplot(p1,p2,cols=2)
+    output$distPlot<-renderPlot({
+  print(ggplot(data = a, aes(x =a[,1], y = a[,2])) +
+      geom_tile(aes(fill = a[,3])) + xlab("x") +ylab("y") + labs(fill="V(x,y)")) }) 
+  })
   
   getData <- reactive({
     tempo=input$Passos
@@ -614,6 +653,8 @@ server <- function(input, output) {
       Propagarerro()
     else if(input$hue=="Analise Audio")
         Audios()
+    else if(input$hue=="Potencial de Laplace")
+      laplaceheat()
     })
     
 #   output$distPlot <- renderPlot({

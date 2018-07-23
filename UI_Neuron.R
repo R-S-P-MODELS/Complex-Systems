@@ -1,12 +1,16 @@
 myUI <- shinyUI({
 fluidPage(
 	
-   withMathJax(),
+   withMathJax(), 
+ tags$div(HTML("")),
+# helpText('An irrational number $\\sqrt{2}$ and a fraction $1-\frac{1}{2}$'),
+                #    helpText('Neste Modulo discutimos um problema de sincronizacao da informacao em uma populacao utilizando um grafo direcionado para representar suas conexoes'),
+		 #   helpText('O individuo sera simulado utilizando se os mesmos conceitos de um Neuronio, onde este ira acumular tensao ate o seu treshhold, aonde este ira disparar transmitindo informacao a seus vizinhos'),
+		  #  helpText("O valor disparado por um individuo sera dado por $ \\rho T$ onde T representa o valor do treshhold, $\\rho$ varia para cada individuo, onde a inicializacao sera dada por uma gaussiana"),
+		#helpText('Os parametros desta sao inicializados pelo usuario, esta e cortada de forma que $latex 0<\rho<1$'),
+		 # helpText(withMathJax("$$\\text{Os parametros desta sao inicializados pelo usuario, esta e cortada de forma que $ }0<\\rho<1$$")),
+      includeMarkdown("neuronioui.mark"),
 
-                    helpText('Neste Modulo discutimos um problema de sincronizacao da informacao em uma populacao utilizando um grafo direcionado para representar suas conexoes'),
-		    helpText('O individuo sera simulado utilizando se os mesmos conceitos de um Neuronio, onde este ira acumular tensao ate o seu treshhold, aonde este ira disparar transmitindo informacao a seus vizinhos'),
-		    helpText('O valor disparado por um individuo será dado por $ \\rho T$ onde T representa o valor do treshhold, $\\rho$ varia para cada individuo, onde a inicializacao sera dada por uma gaussiana'),
-		    helpText('Os parametros desta sao inicializados pelo usuario, esta e cortada de forma que $0<\\rho<1$'),
 
    # Application title
    titlePanel("Modelo Neuronios"),

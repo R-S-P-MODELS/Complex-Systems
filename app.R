@@ -6,16 +6,18 @@
 #
 #    http://shiny.rstudio.com/
 #
-packages <- c("ggplot2","shiny","pracma")
+packages <- c("ggplot2","shiny","pracma","tuneR","markdown")
 if (length(setdiff(packages, rownames(installed.packages()))) > 0) {
   install.packages(setdiff(packages, rownames(installed.packages())))  
 }
-
 require(shiny)
 require(ggplot2)
 require(pracma)
+require(tuneR)
+require(markdown)
 multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
   library(grid)
+  options(shiny.maxRequestSize = 30000*1024^2)
   
   # Make a list from the ... arguments and plotlist
   plots <- c(list(...), plotlist)
@@ -281,7 +283,9 @@ SEIR <- function(N,beta,gamma,passos,infeccaoinicial,mu) {
 ui <- fluidPage(
    
    # Application title
-  div(style="display:inline-block",selectInput(inputId = "hue",label="opcao",choices = c("SIS","SIR","SEIR","Atrator de Lorentz","Andar do Bebado","Ajuste de curva","Filtro Personalizado","Oscilador Quantico","Intra Hospedeiro","Informacao Neuronios") ) ),      
+  selectInput(inputId = "materias",label = "Area",choices=c("Fisica Teorica","Fisica Experimental","Sistemas Complexos","Data Science") ),
+  uiOutput("Drop1"),
+  #div(style="display:inline-block",selectInput(inputId = "hue",label="opcao",choices = c("SIS","SIR","SEIR","Atrator de Lorentz","Andar do Bebado","Ajuste de curva","Filtro Personalizado","Oscilador Quantico","Intra Hospedeiro","Informacao Neuronios") ) ),      
   conditionalPanel( condition = "input.hue=='SIS'",
                     source("UI_SIS.R", local = TRUE)$value
                     
@@ -331,6 +335,14 @@ ui <- fluidPage(
                    source("UI_Neuron.R",local=TRUE)$value
                    
  ),
+ conditionalPanel( condition = "input.hue=='Propagar Erro'",
+                   source("UI_PropagarErro.R",local=TRUE)$value
+                   
+ ),
+ conditionalPanel( condition = "input.hue=='Analise Audio'",
+                   source("UI_Musicas.R",local=TRUE)$value
+                   
+ ),
   # titlePanel("Old Faithful Geyser Data"),
    
       # Show a plot of the generated distribution
@@ -344,6 +356,21 @@ ui <- fluidPage(
 
 # Define server logic required to draw a histogram
 server <- function(input, output) {
+ # palavragrande=c("SIS","SIR","SEIR","Atrator de Lorentz","Andar do Bebado","Ajuste de curva","Filtro Personalizado","Oscilador Quantico","Intra Hospedeiro","Informacao Neuronios")
+  
+    
+  
+  output$Drop1 = renderUI({ 
+    if(input$materias=="Fisica Teorica")
+      palavragrande=c("Atrator de Lorentz","Andar do Bebado","Oscilador Quantico")
+    else if(input$materias=="Fisica Experimental")
+      palavragrande=c("Ajuste de curva","Filtro Personalizado","Propagar Erro")
+    else if(input$materias=="Sistemas Complexos")
+      palavragrande=c("SIS","SIR","SEIR","Intra Hospedeiro","Informacao Neuronios")
+    else if(input$materias=="Data Science")
+      palavragrande=c("Analise Audio")
+    palavragrande=sort(palavragrande)  
+    selectizeInput(inputId = "hue", label = "opcao", choices =palavragrande  )})
   
   withinhost<-eventReactive(input$ativacao,{
     a=input$a1
@@ -427,6 +454,81 @@ server <- function(input, output) {
                                   })
   
   
+  Audios= eventReactive(input$calculandomusica, 
+                         {  
+                          # shiny.maxRequestSize=30*1024^2
+
+                           print("pre")
+                           
+                           inFile <- input$arquimusica
+                           
+                           if (is.null(inFile))
+                             return(NULL)
+                           print("pre")
+                           print(inFile$datapath)
+                           w=readMP3(inFile$datapath)
+                           print("pos")
+                           hist(w@left,xlab = "Representacao Digital da intensidade")
+                           #ajuste(w,input$termosmaximos)
+                           #ajusteunico(w,input$termosmaximos)
+                         })
+  
+  
+  Propagarerro= eventReactive(input$calculandoerro, 
+                         {
+                        #   print("pre")
+                           
+                           inFile <- input$arquierro
+                           
+                           if (is.null(inFile))
+                             return(NULL)
+                           #print("pre")
+                           print(inFile$datapath)
+                           w=read.table(inFile$datapath)
+                           #hr()
+                           showNotification("Calculando")
+                           
+                             #print("calculando")
+                           if(input$opcoeserro=="soma"){
+                             coluna1=w[,1]+w[,2]
+                             coluna2=w[,3]+w[,4]
+                             
+                           }
+                          else if(input$opcoeserro=="subtracao"){
+                             coluna1=w[,2]-w[,1]
+                             coluna2=w[,3]+w[,4]
+                             
+                           }
+                          else if(input$opcoeserro=="produto"){
+                             coluna1=w[,2]*w[,1]
+                             coluna2=w[,3]*w[,2]+w[,4]*w[,1]
+                             
+                           }
+                          else if(input$opcoeserro=="divisao"){
+                             coluna1=w[,2]/w[,1]
+                             coluna2=(w[,3]*w[,2]+w[,4]*w[,1])/w[,1]^2
+                             
+                           }
+                           colunas=data.frame(coluna1,coluna2)
+                           write.table(file="saida.dat",colunas)
+                           showNotification("Calculado")
+                           print("Calculado")
+                           #ajuste(w,input$termosmaximos)
+                           #ajusteunico(w,input$termosmaximos)
+                         })
+  
+  output$downloadErro <- downloadHandler(
+    filename = function() {
+      paste("saida", ".dat", sep = "")
+    },
+    content = function(file) {
+      a=read.table("saida.dat")
+      write.table(a, file, row.names = FALSE,col.names = FALSE)
+    }
+  )
+  
+  
+  
   filtrar= eventReactive(input$botaofiltrado, 
                                   {
                                     inFile <- input$file1
@@ -508,7 +610,11 @@ server <- function(input, output) {
       withinhost()
     else if(input$hue=="Informacao Neuronios")
       Neurons()
-  })
+    else if(input$hue=="Propagar Erro")
+      Propagarerro()
+    else if(input$hue=="Analise Audio")
+        Audios()
+    })
     
 #   output$distPlot <- renderPlot({
       # generate bins based on input$bins from ui.R

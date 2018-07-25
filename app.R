@@ -353,6 +353,10 @@ ui <- fluidPage(
                    source("UI_TimeSeries.R",local=TRUE)$value
                    
  ),
+ conditionalPanel( condition = "input.hue=='Dilema do prisioneiro'",
+                   source("UI_Game.R",local=TRUE)$value
+                   
+ ),
  # titlePanel("Old Faithful Geyser Data"),
    
       # Show a plot of the generated distribution
@@ -377,11 +381,11 @@ server <- function(input, output) {
     else if(input$materias=="Fisica Experimental")
       palavragrande=c("Ajuste de curva","Filtro Personalizado","Propagar Erro")
     else if(input$materias=="Sistemas Complexos")
-      palavragrande=c("SIS","SIR","SEIR","Intra Hospedeiro","Informacao Neuronios")
+      palavragrande=c("SIS","SIR","SEIR","Intra Hospedeiro","Informacao Neuronios","Dilema do prisioneiro")
     else if(input$materias=="Data Science")
       palavragrande=c("Analise Audio","Serie Temporal")
     palavragrande=sort(palavragrande)  
-    selectizeInput(inputId = "hue", label = "opcao", choices =palavragrande  )})
+    selectizeInput(inputId = "hue", label = "opcao", choices =palavragrande  ) })
   
   withinhost<-eventReactive(input$ativacao,{
     a=input$a1
@@ -412,6 +416,36 @@ server <- function(input, output) {
     
   })
   
+  
+  GameTheory<-eventReactive(input$ativacaoJogos,{
+    a=input$traicao
+    b=input$vargaussa
+    c=runif(1)*198711
+    str="./a.out"
+    str=paste(str,c)
+    
+    str=paste(str,a)
+    str=paste(str,b)
+    str=paste(str,"> saida.dat")
+    
+    #system("gcc harmonico")
+    print(str)
+    system("gcc teoriajogos7.cpp -lm",intern=TRUE)
+    system(str,intern=TRUE)
+    hu=read.table("saida.dat")
+    print(hu)
+    # if(input$onda=="psi")
+    helpText("Azul Cooperadores vermelho traidores")
+    algo=1-hu[,2]
+    matplot(hu[,1],hu[,2],type="l",xlab="t",ylab="population fraction",col="blue",ylim = c(0,1))
+    matplot(hu[,1],algo,type="l",xlab="t",ylab="population fraction",col = "red",add = TRUE,ylim = c(0,1))
+    #matplot(hu[,1]/365.0,hu[,6],type="l",xlab="x",ylab="y",col="green",add = TRUE)
+    #p1=qplot(hu[,1],hu[,3]/hu[,2],xlab="x",ylab = "psi",geom="line")
+    #else if(input$onda=="probabilidade")
+    # qplot(hu[,1],hu[,4]/hu[,2],xlab="x",ylab = "psi",geom="line")
+    #  qplot(hu[,1],hu[,4]/hu[,2],xlab="x",ylab = "psi",geom="line")
+    
+  })
   
   
   Neurons<-eventReactive(input$ativacaoneuron,{
@@ -690,6 +724,8 @@ server <- function(input, output) {
       laplaceheat()
     else if(input$hue=="Serie Temporal")
       Serie_Temporal()
+    else if(input$hue=="Dilema do prisioneiro")
+      GameTheory()
     })
     
 #   output$distPlot <- renderPlot({

@@ -6,7 +6,7 @@
 #
 #    http://shiny.rstudio.com/
 #
-packages <- c("ggplot2","shiny","pracma","tuneR","markdown")
+packages <- c("ggplot2","shiny","pracma","tuneR","markdown","grid","gplots","forecast")
 if (length(setdiff(packages, rownames(installed.packages()))) > 0) {
   install.packages(setdiff(packages, rownames(installed.packages())))  
 }
@@ -15,6 +15,8 @@ require(ggplot2)
 require(pracma)
 require(tuneR)
 require(markdown)
+require(gplots)
+require(forecast)
 multiplot <- function(..., plotlist=NULL, file, cols=1, layout=NULL) {
   library(grid)
   options(shiny.maxRequestSize = 30000*1024^2)
@@ -347,7 +349,11 @@ ui <- fluidPage(
                    source("UI_Laplace.R",local=TRUE)$value
                    
  ),
-  # titlePanel("Old Faithful Geyser Data"),
+ conditionalPanel( condition = "input.hue=='Serie Temporal'",
+                   source("UI_TimeSeries.R",local=TRUE)$value
+                   
+ ),
+ # titlePanel("Old Faithful Geyser Data"),
    
       # Show a plot of the generated distribution
       mainPanel(
@@ -355,6 +361,7 @@ ui <- fluidPage(
       ),
  hr(),
  print("Modelo programado por Rafael Silva Pereira, contato: r.s.p.models@gmail.com")
+ #tags$video(src="www/nightwish.mp4",width="500px",height="350px",type="video/mp4",controls="controls")
    )
 
 
@@ -372,7 +379,7 @@ server <- function(input, output) {
     else if(input$materias=="Sistemas Complexos")
       palavragrande=c("SIS","SIR","SEIR","Intra Hospedeiro","Informacao Neuronios")
     else if(input$materias=="Data Science")
-      palavragrande=c("Analise Audio")
+      palavragrande=c("Analise Audio","Serie Temporal")
     palavragrande=sort(palavragrande)  
     selectizeInput(inputId = "hue", label = "opcao", choices =palavragrande  )})
   
@@ -456,6 +463,28 @@ server <- function(input, output) {
                                     #ajuste(w,input$termosmaximos)
                                     ajusteunico(w,input$termosmaximos)
                                   })
+  
+  Serie_Temporal= eventReactive(input$calculandoserie, 
+                         {
+                           print("pre")
+                           
+                           inFile <- input$arquits
+                           
+                           if (is.null(inFile))
+                             return(NULL)
+                           print("pre")
+                           print(inFile$datapath)
+                           w=scan(inFile$datapath)
+                           print("pos")
+                           myts <- ts(w,frequency=input$repeticaots)
+                           if(input$opcaodaserie=="exponencial")
+                            fit <- ets(myts)
+                           else if(input$opcaodaserie=="arima")
+                             fit <- auto.arima(myts)
+                           plot(forecast(fit, input$previsaots))
+                           #ajuste(w,input$termosmaximos)
+                           #ajusteunico(w,input$termosmaximos)
+                         })
   
   
   Audios= eventReactive(input$calculandomusica, 
@@ -614,11 +643,15 @@ server <- function(input, output) {
     #else if(input$onda=="probabilidade")
    # p2= qplot(hu[,1],hu[,3],xlab="x",ylab = "psi*psi",geom="line")
     #multiplot(p1,p2,cols=2)
-    output$distPlot<-renderPlot({
-  print(ggplot(data = a, aes(x =a[,1], y = a[,2])) +
-      geom_tile(aes(fill = a[,3])) + xlab("x") +ylab("y") + labs(fill="V(x,y)")) }) 
+   # output$distPlot<-renderPlot({
+  #print(ggplot(data = a, aes(x =a[,1], y = a[,2])) +
+   #   geom_tile(aes(fill = a[,3])) + xlab("x") +ylab("y") + labs(fill="V(x,y)")) }) 
+#  })
+    u=matrix(a[,3],sqrt(length(a[,3])),sqrt(length(a[,3])))
+    #image(u)
+    heatmap.2(u, dendrogram = "none", Rowv = FALSE, Colv = FALSE) 
+    
   })
-  
   getData <- reactive({
     tempo=input$Passos
     funParameter <- input$rho
@@ -655,6 +688,8 @@ server <- function(input, output) {
         Audios()
     else if(input$hue=="Potencial de Laplace")
       laplaceheat()
+    else if(input$hue=="Serie Temporal")
+      Serie_Temporal()
     })
     
 #   output$distPlot <- renderPlot({

@@ -44,8 +44,9 @@ helpText("Ao encontrar o filtro ideal clique em executar convolucao e a primeira
 #div(style="display:inline-block",selectInput(inputId = "Opcao_Resultado",label="tipo de Resultado",choices = c("G(r)","deslocamento quadratico","Energias") ) ) ,
 
 actionButton("botaofiltrado", "Reajustar Filtro"),
-actionButton("conv", "Calcular convolucao")
+actionButton("conv", "Calcular convolucao"),
 
+downloadButton("downloadExemplo2", "arquivo de exemplos favor clique em reajustar filtro e calcular convolucao para gerar")
 
      # plotOutput(outputId = "distPlot")
       #counter <- reactiveValues(countervalue = 0)

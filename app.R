@@ -75,6 +75,7 @@ sinal<-function(m,a){
   p2=qplot(u[,1],Mod(b),geom="line",xlab="x",ylab="y")
   multiplot(p1, p2,cols=2)
   write.table(file="saida.dat",u)
+  
 }
 
 convolucao<-function(b){
@@ -133,6 +134,8 @@ ajusteunico<-function(a,w){
   plot(a[,1],a[,2],xlab="x",ylab = "y",main="F(x)")
   lines(a[,1], predict(fit2, data.frame(x=a[,1])), col="red")
   renderPrint(coefficients(fit2))
+  write.table(file="saida.dat",coef(fit2))
+  
   #write.table(file="dataset.dat",final)
 }
 
@@ -485,7 +488,10 @@ server <- function(input, output) {
   fitando= eventReactive(input$calculando, 
                                   {
                                     print("pre")
-                                    
+                                    linha1=1:10
+                                    linha2=linha1^2 + linha1
+                                    auxiliar=data.frame(linha1,linha2)
+                                    write.table(file="exemplo.dat",auxiliar)
                                     inFile <- input$arqui
                                     
                                     if (is.null(inFile))
@@ -544,6 +550,10 @@ server <- function(input, output) {
   Propagarerro= eventReactive(input$calculandoerro, 
                          {
                         #   print("pre")
+                           linha1=1:10
+                           linha2=linha1^2 + linha1
+                           auxiliar=data.frame(linha1,linha2,linha1/100,linha2/100)
+                           write.table(file="exemplo.dat",auxiliar)
                            
                            inFile <- input$arquierro
                            
@@ -593,11 +603,52 @@ server <- function(input, output) {
       write.table(a, file, row.names = FALSE,col.names = FALSE)
     }
   )
+  output$downloadExemplo <- downloadHandler(
+    filename = function() {
+      paste("exemplo", ".dat", sep = "")
+    },
+    content = function(file) {
+      a=read.table("exemplo.dat")
+      write.table(a, file, row.names = FALSE,col.names = FALSE)
+    }
+  )
   
+  output$downloadExemplo1 <- downloadHandler(
+    filename = function() {
+      paste("exemplo", ".dat", sep = "")
+    },
+    content = function(file) {
+      a=read.table("exemplo.dat")
+      write.table(a, file, row.names = FALSE,col.names = FALSE)
+    }
+  )
   
+  output$downloadExemplo2 <- downloadHandler(
+    filename = function() {
+      paste("exemplo", ".dat", sep = "")
+    },
+    content = function(file) {
+      a=read.table("exemplo.dat")
+      write.table(a, file, row.names = FALSE,col.names = FALSE)
+    }
+  )
+  
+  output$downloadCoeficientes <- downloadHandler(
+    filename = function() {
+      paste("saida", ".dat", sep = "")
+    },
+    content = function(file) {
+      a=read.table("saida.dat")
+      write.table(a, file, row.names = FALSE,col.names = FALSE)
+    }
+  )
   
   filtrar= eventReactive(input$botaofiltrado, 
                                   {
+                                    linha1=1:513
+                                    linha2=linha1^2 + linha1
+                                    auxiliar=data.frame(linha1,linha2)
+                                    write.table(file="exemplo.dat",auxiliar)
                                     inFile <- input$file1
                                     
                                     if (is.null(inFile))

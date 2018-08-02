@@ -20,7 +20,8 @@ withMathJax(),
 #div(style="display:inline-block",selectInput(inputId = "Opcao_Resultado",label="tipo de Resultado",choices = c("G(r)","deslocamento quadratico","Energias") ) ) ,
 
 actionButton("calculandoerro", "Realizar Calculo"),
-downloadButton("downloadErro", "Download")
+downloadButton("downloadErro", "Download"),
+downloadButton("downloadExemplo1", "arquivo de exemplos favor clique em realizar para gerar")
 
 
       

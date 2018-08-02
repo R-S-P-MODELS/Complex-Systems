@@ -21,10 +21,12 @@ withMathJax(),
 
 #div(style="display:inline-block",selectInput(inputId = "Opcao_Resultado",label="tipo de Resultado",choices = c("G(r)","deslocamento quadratico","Energias") ) ) ,
 
-actionButton("calculando", "Iniciar ajuste")
+actionButton("calculando", "Iniciar ajuste"),
+
+downloadButton("downloadCoeficientes", "Download dos coeficientes"),
+downloadButton("downloadExemplo", "arquivo de exemplos favor clique em iniciar ajuste para gerar")
 
 
-      
       #counter <- reactiveValues(countervalue = 0)
   
 
